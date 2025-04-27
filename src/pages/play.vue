@@ -20,24 +20,49 @@ import { decodeChatMessage, decodePushFrame, decodeResponse, encodePushFrame } f
 //     return true
 //   }
 // })
+
+
+// type State = {
+//   follow: boolean,
+//   type: number,
+//   qn: number
+//   line: number,
+//   muted: boolean,
+//   paused?: boolean,
+//   notice: string | null
+//   flv?: Flv,
+//   hls?: Hls,
+//   url?: string,
+//   fullscreen: boolean,
+//   webscreen: boolean,
+//   showController: boolean,
+//   showInfo: boolean
+//   dm?: boolean
+//   pictureInPicture: boolean
+// }
+
 type State = {
-  follow: boolean,
-  type: number,
-  qn: number
-  line: number,
-  muted: boolean,
-  paused?: boolean,
-  notice: string | null
-  flv?: Flv,
-  hls?: Hls,
-  url?: string,
-  fullscreen: boolean,
-  webscreen: boolean,
-  showController: boolean,
-  showInfo: boolean
-  dm?: boolean
-  pictureInPicture: boolean
-}
+  follow: boolean;
+  type: number;  // 用于选择 stream 的索引，表示选择的视频流类型
+  qn: number;    // 用于选择分辨率（或线路）
+  line: number;  // 用于选择线路
+  muted: boolean;
+  paused?: boolean;
+  notice: string | null;
+  flv?: Flv;
+  hls?: Hls;
+  url?: string;
+  fullscreen: boolean;
+  webscreen: boolean;
+  showController: boolean;
+  showInfo: boolean;
+  dm?: boolean;
+  pictureInPicture: boolean;
+
+  [key: string]: any;  // 可选：为所有其他属性提供索引签名
+};
+
+
 let clickTimer: number
 let noticeTimer: number
 let autoHideTimer: number
@@ -62,34 +87,265 @@ const player = ref() as Ref<HTMLElement>
 const video = ref() as Ref<HTMLVideoElement>
 const dm = ref() as Ref<HTMLElement>
 const room = shallowRef<LiveRoomItem>()
-const types = computed(() => room.value?.stream?.map(i => i.type.toUpperCase()) || [])
-const qns = computed(() => types.value.length > 0 ? room.value!.stream[state.type].list.map(i => i.name) : [])
-const lines = computed(() => qns.value.length > 0 ? room.value!.stream[state.type].list[state.qn].lines.map(i => i.name) : [])
-const type = computed(() => types.value[state.type]?.toLowerCase() as 'flv')
-const url = computed(() => lines.value.length > 0 ? room.value!.stream[state.type].list[state.qn].lines[state.line].url : '')
-const follows = computed(() => sites.map(site => Object.values(site.follows) as LiveRoomItem[]).flat().sort(i => i.status ? -1 : 0))
+// const types = computed(() => {
+//   console.log("types:", types.value);  // 查看 types 是否正确
+//   const streams = room.value?.stream
+//   if (!Array.isArray(streams) || streams.length === 0) {
+//     console.error("没有可用的直播流数据");
+//     return [];
+//   }
+//   return streams
+//     .filter((i: any) => typeof i.type === 'string' && i.type.trim().length > 0)
+//     .map((i: any) => (i.type as string).toUpperCase())
+// })
+
+// const qns = computed(() => {
+//   const streams = room.value?.stream
+//   if (!Array.isArray(streams)) return []
+//   const idx = state.type
+//   const list = streams[idx]?.list
+//   if (!Array.isArray(list)) return []
+//   return list
+//     .filter((i: any) => typeof i.name === 'string')
+//     .map((i: any) => i.name)
+// })
+
+// const lines = computed(() => {
+//   const streams = room.value?.stream
+//   if (!Array.isArray(streams)) return []
+//   const list = streams[state.type]?.list
+//   if (!Array.isArray(list)) return []
+//   const lineArr = list[state.qn]?.lines
+//   if (!Array.isArray(lineArr)) return []
+//   return lineArr
+//     .filter((i: any) => typeof i.name === 'string')
+//     .map((i: any) => i.name)
+// })
+// const type = computed(() => types.value[state.type]?.toLowerCase() as 'flv')
+// const url = computed(() => {
+//   const streams = room.value?.stream
+//   if (!Array.isArray(streams)) return ''
+//   const list = streams[state.type]?.list
+//   if (!Array.isArray(list)) return ''
+//   const lineArr = list[state.qn]?.lines
+//   if (!Array.isArray(lineArr)) return ''
+//   const urlVal = lineArr[state.line]?.url
+//   return typeof urlVal === 'string' ? urlVal : ''
+// })
+// const follows = computed(() => sites.map((site: any) => Object.values(site.follows) as LiveRoomItem[]).flat().sort((i: any) => i.status ? -1 : 0))
+
+// 计算 types（每个流的名称）
+const types = computed(() => {
+  const streams = room.value?.stream;
+  if (!Array.isArray(streams) || streams.length === 0) {
+    console.error("没有可用的直播流数据");
+    return [];
+  }
+  return streams.map((i: any) => i.name);  // 获取每个流的名称
+});
+
+// 计算 qns（根据选择的 type，获取该流的所有线路名称）
+const qns = computed(() => {
+  const streams = room.value?.stream;
+  if (!Array.isArray(streams)) return [];
+  const idx = state.type;  // 当前选择的流
+  const lines = streams[idx]?.lines;  // 获取选定流的所有线路
+  if (!Array.isArray(lines)) return [];
+  return lines.map((i: LiveLine) => i.name);  // 返回线路名称
+});
+
+
+// 计算 lines（根据选择的 type 和 qn，获取对应线路的所有信息）
+const lines = computed(() => {
+  const streams = room.value?.stream;
+  if (!Array.isArray(streams)) return [];
+  const lines = streams[state.type]?.lines;  // 获取当前流的所有线路
+  if (!Array.isArray(lines)) return [];
+  return lines.map((i: LiveLine) => i.name);  // 返回线路名称
+});
+
+// 计算最终的 url（根据 type、qn 和 line 获取选择线路的 url）
+const url = computed(() => {
+  const streams = room.value?.stream;
+  if (!Array.isArray(streams)) return '';
+  const lines = streams[state.type]?.lines;  // 获取当前流的所有线路
+  if (!Array.isArray(lines)) return '';
+  const urlVal = lines[state.line]?.url;  // 获取选择的线路的 URL
+  return typeof urlVal === 'string' ? urlVal : '';  // 如果 URL 是有效的字符串，则返回
+});
+
+// 计算 type（选中的流类型，转换为小写）
+const type = computed(() => {
+  const streamType = types.value[state.type]  // 获取当前选择的流类型名称
+  //return streamType ? streamType.toLowerCase() as 'flv' : ''  // 转为小写
+  return streamType ? streamType.toLowerCase() : '';
+})
+
+// 计算 follows（所有站点的直播间数据，按状态排序）
+const follows = computed(() => sites.map((site: any) => Object.values(site.follows) as LiveRoomItem[]).flat().sort((i: any) => i.status ? -1 : 0));
+
+
+// watch(url, () => {
+
+//   console.log("当前的 URL:", url.value);  // 加入这个日志来确认 url 是否有效
+//   if (!url.value) {
+//     console.error("无法获取视频 URL");
+//     return
+//   }
+
+//   console.log("视频源 URL:", url.value);
+
+//   const type = types.value[state.type!].toLowerCase() as 'flv' | 'hls';
+//   console.log("选择的流类型:", type);  // 打印选择的流类型
+//   if (state[type]) {
+//     type == 'flv' ? state.flv?.switchURL(url.value, route.meta.site.id != 'bilibili') : state.hls?.loadSource(url.value)
+//     return
+//   }
+//   if (type == 'flv' && Flv?.isSupported('video')) {
+//     console.log("初始化 FLV 播放器");
+//     const flv = new Flv({ media: video.value, seamlesslyReload: true, isLive: true, retryCount: 0 })
+//     flv.on('error', (err: any) => {
+//       console.error('FLV 播放器初始化失败', err);
+//       state.notice = '视频加载失败';
+//     });
+//     flv.load(url.value)
+//     return state.flv = flv
+//   }
+//   if (type == 'hls' && Hls?.isSupported()) {
+//     console.log("初始化 HLS 播放器");
+//     const hls = new Hls()
+//     hls.on(Hls.Events.ERROR, (event: any, data: any) => {
+//       console.error('HLS 播放器错误', event, data);
+//       state.notice = '视频加载失败';
+//     });
+//     hls.attachMedia(video.value)
+//     hls.loadSource(url.value)
+//     return state.hls = hls
+//   }
+//   state.notice = `不支持 ${type}`;
+//   return clearTimeout(noticeTimer)
+// })
+
+// 获取huya URL 中的 ratio 参数
+function getExpireTimeFromUrl(url: string): number {
+  if (room.value?.siteId == 'huya') {
+    const urlParams = new URLSearchParams(new URL(url).search);
+    const ratio = urlParams.get('ratio');
+    if (ratio) {
+      return ratio ? parseInt(ratio, 10) : 0; // 返回过期时间，单位为毫秒ms
+    }
+    
+  }
+  return 0;
+  
+}
+
+// let refreshTimer: any;
 
 watch(url, () => {
-  if (!url.value) return
-  const type = types.value[state.type!].toLowerCase() as 'flv' | 'hls'
-  if (state[type]) {
-    type == 'flv' ? state.flv?.switchURL(url.value, route.meta.site.id != 'bilibili') : state.hls?.loadSource(url.value)
-    return
+  console.log("当前的 URL:", url.value);  // 加入这个日志来确认 url 是否有效
+  if (!url.value) {
+    console.error("无法获取视频 URL");
+    return;
   }
-  if (type == 'flv' && Flv?.isSupported('video')) {
-    const flv = new Flv({ media: video.value, seamlesslyReload: true, isLive: true, retryCount: 0 })
-    flv.load(url.value)
-    return state.flv = flv
+
+  console.log("视频源 URL:", url.value);
+
+  // // 获取 URL 中的 ratio 参数
+  // const expireTime = getExpireTimeFromUrl(url.value);
+  // console.log("huya视频 URL 的过期时间是:", expireTime, "毫秒");
+
+  // // 如果 ratio 参数存在且大于 0，则设置定时器
+  // if (expireTime > 0 ) {
+  //   // 清除之前的定时器（如果有）
+  //   if (refreshTimer) clearInterval(refreshTimer);
+
+  //   // 设置定时器，每隔 expireTime 毫秒刷新一次
+  //   refreshTimer = setInterval(() => {
+  //     console.log("刷新视频源 URL:", url.value);
+
+  //     // 切换 FLV 播放器的 URL
+  //     if (state.flv) {
+  //       state.flv.switchURL(url.value, route.meta.site.id !== 'bilibili');
+  //     } else if (state.hls) {
+  //       state.hls.loadSource(url.value);
+  //     }
+  //   }, expireTime ); // 每过 expireTime 毫秒刷新一次
+  // } else {
+  //   console.log("无效的 ratio 参数，无法设置刷新时间");
+  //   if (refreshTimer) clearInterval(refreshTimer);
+  // }
+
+  // 获取选择的视频流
+  const selectedStream = room.value?.stream[state.type!];
+  if (!selectedStream) {
+    console.error("未找到有效的流");
+    return;
   }
-  if (type == 'hls' && Hls?.isSupported()) {
-    const hls = new Hls()
-    hls.attachMedia(video.value)
-    hls.loadSource(url.value)
-    return state.hls = hls
+
+  // 获取选定流的线路（使用 line 来确定）
+  const selectedLine = selectedStream.lines[state.line];
+  if (!selectedLine) {
+    console.error("未找到有效的线路");
+    return;
   }
+
+  // 根据 url 的文件扩展名来判断流类型
+  let type: 'flv' | 'hls' = 'flv';  // 默认使用 flv
+  if (selectedLine.url.includes('.m3u8')) {
+    type = 'hls';  // 如果 URL 包含 .m3u8 后缀，认为是 hls 类型
+  } else if (selectedLine.url.includes('.flv')) {
+    type = 'flv';  // 如果 URL 包含 .flv 后缀，认为是 flv 类型
+  } else {
+    console.error("无法根据 URL 确定流的类型");
+    return;
+  }
+
+  console.log("选择的流类型:", type);  // 打印选择的流类型
+
+  // 如果有现有播放器实例，直接切换 URL
+  if (state.flv && type === 'flv') {
+    console.log("切换 FLV 播放器的 URL");
+    state.flv.switchURL(url.value, route.meta.site.id !== 'bilibili');
+    return;
+  }
+  if (state.hls && type === 'hls') {
+    console.log("切换 HLS 播放器的 URL");
+    state.hls.loadSource(url.value);
+    return;
+  }
+
+  // 如果没有现有播放器实例，初始化播放器
+  if (type === 'flv' && Flv?.isSupported('video')) {
+    console.log("初始化 FLV 播放器");
+    const flv = new Flv({ media: video.value, seamlesslyReload: true, isLive: true, retryCount: 0 });
+    flv.on('error', (err: any) => {
+      console.error('FLV 播放器初始化失败', err);
+      state.notice = '视频加载失败';
+    });
+    flv.load(url.value);
+    state.flv = flv;  // 设置 state.flv 为初始化的播放器实例
+    return;
+  }
+
+  if (type === 'hls' && Hls?.isSupported()) {
+    console.log("初始化 HLS 播放器");
+    const hls = new Hls();
+    hls.on(Hls.Events.ERROR, (event: any, data: any) => {
+      console.error('HLS 播放器错误', event, data);
+      state.notice = '视频加载失败';
+    });
+    hls.attachMedia(video.value);
+    hls.loadSource(url.value);
+    state.hls = hls;  // 设置 state.hls 为初始化的播放器实例
+    return;
+  }
+
+  // 如果都不支持，设置提示信息
   state.notice = `不支持 ${type}`;
-  return clearTimeout(noticeTimer)
-})
+  clearTimeout(noticeTimer);  // 清除计时器
+});
+
 
 watch(type, () => {
   if (type.value == 'flv') {
@@ -101,6 +357,26 @@ watch(type, () => {
   state.flv = undefined
 })
 
+//调试
+watchEffect(() => {
+  if (room.value?.stream && room.value.stream.length > 0) {
+    console.log("直播间流数据加载成功", room.value.stream);
+    // 在此处进行后续处理，比如设置 `types`、`qns` 等
+
+
+  } else {
+    console.log("流数据还在加载中...");
+  }
+});
+
+
+watch(state, () => {
+  console.log("当前选择的类型:", state.type);  // 查看当前选择的类型
+});
+
+onMounted(() => {
+  console.log("视频元素:", video.value);  // 确认 video 元素是否有效
+});
 
 const danmakuClean = () => {
   dm.value.scrollTop = 0
@@ -162,7 +438,7 @@ function renderDm() {
 
 const addDm = (nick: string, msg: string) => {
   dmCount++
-  if (dmSetting.blockOpen && blockRegex.value.length && blockRegex.value.some(i => i.test(msg))) return
+  if (dmSetting.blockOpen && blockRegex.value.length && blockRegex.value.some((i: any) => i.test(msg))) return
   if (dmCount % (dmSetting.sideClean || 100) == 0) {
     dm.value.innerHTML = ''
     scrolltop = 0
@@ -217,6 +493,7 @@ const wsStart = () => {
   if (!room.value || ws || (!dmSetting.canvasOpen && !dmSetting.sideOpen)) return
   let first = true
   if (room.value.siteId == 'huya') {
+    // wss://cdnws.api.huya.com
     const url = room.value?.ws
     if (!url) return
     ws = new WebSocket(url)
@@ -355,7 +632,33 @@ const wsClose = () => {
   // dmOb.unobserve(dm.value)
   // cvOb.unobserve(canvas.value)
 }
-watch(room, () => wsStart())
+watch(room, () => {
+  console.log("room.value updated:", room.value);
+  // 只有在 stream 数据有效后再进行处理
+  if (room.value && room.value.stream) {
+    // 计算 types，直接通过 computed 来获取
+    const newTypes = room.value.stream.map((stream: any) => stream.name.toUpperCase());
+
+    // 根据加载完成后的 stream 数据来设置默认的 type、qn 和 line
+    if (newTypes.length > 0) {
+      if(newTypes.length > 2){
+        state.type = newTypes.length - 2;  // 默认选择倒数第二个流
+      }else if(newTypes.length = 2){
+        state.type = newTypes.length - 1;
+      }else {state.type = 0;}
+      const firstStream = room.value.stream[state.type];  // 选择第一个流
+      if (firstStream?.lines && firstStream.lines.length > 0) {
+        state.qn = 0;  // 默认选择第一个分辨率
+        const firstLine = firstStream.lines[state.qn];  // 选择第一个线路
+        if (firstLine) {
+          state.line = 0;  // 默认选择第一个线路
+        }
+      }
+    }
+  }
+  wsStart();
+});
+
 // watchEffect(() => {
 //   if (!dmSetting.sideOpen && !dmSetting.canvasOpen) wsClose()
 //   if (!ws) wsStart()
@@ -368,11 +671,20 @@ watch([() => dmSetting.sideOpen, () => dmSetting.canvasOpen], () => {
 
 const init = () => {
   const { site, id } = route.meta
-  const _room = route.meta.site.follows[id]
+  const _room = route.meta.site.follows[id];
+  console.log("_room:", _room); // 确认 _room 是否正确
+  console.log("route.meta.site.follows:", route.meta.site.follows); // 确认 route.meta.site.follows 是否正确
   if (_room) {
     room.value = _room
     state.follow = true
   }
+
+  if (!room.value || !room.value.stream) {
+    console.error("没有获取到直播间的流数据！");
+    state.notice = '直播间流数据加载失败';
+    //return;
+  }
+
   clearInterval(wsTimer)
   clearTimeout(noticeTimer)
   state.notice = '加载中...'
@@ -380,11 +692,18 @@ const init = () => {
     addDm('系统', '开始获取直播间信息')
   })
   useSiteFetch(site.id, 'getRoomDetail', { id }).then((data) => {
+    console.log("获取到的直播间数据:", data); // 打印数据查看
     room.value = data
     if (state.follow) addFollow(data)
     nextTick(() => addDm('系统', '直播间信息获取成功'))
     if (!data.status) return state.notice = '未开播！'
     document.title=room.value!.title
+
+    // 确保 stream 数据存在
+    if (!room.value?.stream || room.value.stream.length === 0) {
+      console.error('没有直播流数据');
+      state.notice = '没有可用的直播流';
+    }
 
   }, (msg) => {
     state.notice = msg
@@ -477,7 +796,8 @@ const remove = () => {
   wsClose()
   document.removeEventListener('keydown', hotkey)
   if (type.value && !state.pictureInPicture) {
-    // const type = types.value[state.type].toLowerCase() as 'flv' | 'hls'
+    //const type = types.value[state.type].toLowerCase() as 'flv' | 'hls'
+    const type = types.value[state.type].toLowerCase();
     state[type.value]?.destroy()
   }
 }
@@ -501,15 +821,18 @@ onMounted(() => {
   video.value.addEventListener('leavepictureinpicture', () => {
     if (!(/play/.test(route.path))) return router.push(fullPath)
     if (route.fullPath == fullPath) return state.pictureInPicture = false
-    state[type.value]?.destroy()
+    //state[type.value]?.destroy()
+    if (type.value && state[type.value]) {
+      state[type.value]?.destroy();
+    }
   })
 
 })
 let siteID = route.meta.site.id
-onBeforeRouteUpdate((to) => {
+onBeforeRouteUpdate((to: any) => {
   const { siteid, id } = to.params as any
   // const site = sites.find(i => i.id == siteId)
-  const index = sitesArr.findIndex(i => i == siteid)
+  const index = sitesArr.findIndex((i: any) => i == siteid)
   if (index == -1) return { name: '404' }
   to.meta.site = sites[index]
   to.meta.id = id
@@ -560,7 +883,7 @@ const togglePictureInPicture = () => {
 const toggleColor = (e: Event) => {
   const color = (e.target as HTMLElement).dataset.color
   if (!color) return
-  const index = dmSetting.colors.findIndex((i) => i == color)
+  const index = dmSetting.colors.findIndex((i: any) => i == color)
   if (index == -1) return dmSetting.colors.push(color)
   if (dmSetting.colors.length == 1) return
   dmSetting.colors.splice(index, 1)
@@ -690,7 +1013,7 @@ const volumeClick = () => {
           <div grow></div>
           <div v-if="types.length">
             <Select v-model:active="state.type" :list="types" />
-            <Select v-model:active="state.qn" :list="qns" />
+            <!-- <Select v-model:active="state.qn" :list="qns" /> -->
             <Select v-model:active="state.line" :list="lines" />
             <div ml-2 v-if="!isMobile" hover:text-amber @click="togglePictureInPicture"
               :class="state.pictureInPicture ? 'i-ri-picture-in-picture-exit-line' : 'i-ri-picture-in-picture-2-line'">

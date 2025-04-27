@@ -54,7 +54,7 @@ const showMenu = ref(true)
   <iframe v-if="showIframe" src="https://live.douyin.com" pos-absolute width="0" height="0" op-0 b-0
     style="z-index: -10;"></iframe>
 
-  <a text-lg href="https://github.com/lemonfog/lemon-live" target="_blank" pos-absolute right-1 sm:right-2 md:right-6
+  <a text-lg href="" target="_blank" pos-absolute right-1 sm:right-2 md:right-6
     top-3 class="i-ri-github-fill" z-10></a> 
   <div v-show="showMenu" text-sm pos-fixed bottom-0 left-0 right-0 md:py-2 b-t-solid b b-gray-7 md:b-r-solid md:top-0 md:right-auto flex
     justify-around md:flex-col md:justify-left bg-dark-7 z-10>

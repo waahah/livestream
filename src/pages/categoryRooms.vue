@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { onLoad } from '../components/list/type';
-import { cookies, getSubCategory } from '../store';
+import { cookies, getSubCategory } from '../store/index';
 
 // definePage({
 //   path: '/category/:siteId/:id',

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { onLoad } from '../components/list/type';
-import { cookies, sites, active } from '../store'
+import { cookies, sites, active } from '../store/index'
 
 // const route = useRoute()
 const router = useRouter()

@@ -47,6 +47,7 @@ declare global {
   const onServerPrefetch: typeof import('vue')['onServerPrefetch']
   const onUnmounted: typeof import('vue')['onUnmounted']
   const onUpdated: typeof import('vue')['onUpdated']
+  const onWatcherCleanup: typeof import('vue')['onWatcherCleanup']
   const provide: typeof import('vue')['provide']
   const reactive: typeof import('vue')['reactive']
   const readonly: typeof import('vue')['readonly']
@@ -70,7 +71,9 @@ declare global {
   const useCssVars: typeof import('vue')['useCssVars']
   const useDanmaku: typeof import('../hooks/useDanmaku')['useDanmaku']
   const useFetch: typeof import('../hooks/useSiteFetch')['useFetch']
+  const useId: typeof import('vue')['useId']
   const useLink: typeof import('vue-router')['useLink']
+  const useModel: typeof import('vue')['useModel']
   const useMouseTouch: typeof import('../hooks/useMouseTouch')['useMouseTouch']
   const useParent: typeof import('../hooks/useRelation')['useParent']
   const useReactiveState: typeof import('../hooks/useState')['useReactiveState']
@@ -83,6 +86,7 @@ declare global {
   const useSync: typeof import('../hooks/useSiteFetch')['useSync']
   const useSyncPull: typeof import('../hooks/useSiteFetch')['useSyncPull']
   const useSyncPush: typeof import('../hooks/useSiteFetch')['useSyncPush']
+  const useTemplateRef: typeof import('vue')['useTemplateRef']
   const watch: typeof import('vue')['watch']
   const watchEffect: typeof import('vue')['watchEffect']
   const watchPostEffect: typeof import('vue')['watchPostEffect']
@@ -91,6 +95,9 @@ declare global {
 // for type re-export
 declare global {
   // @ts-ignore
-  export type { Component, ComponentPublicInstance, ComputedRef, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, VNode, WritableComputedRef } from 'vue'
+  export type { Component, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
+  // @ts-ignore
+  export type { Danmaku } from '../hooks/useDanmaku'
+  import('../hooks/useDanmaku')
 }

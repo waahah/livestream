@@ -39,11 +39,11 @@ export default defineConfig({
     Components({
       dts: 'src/types/components.d.ts',
     }),
-    EsmCdn({
-      sleep: 2000,
-      cdn: 'npmmirror',
-      modules: ['vue', 'vue-router', { name: 'lemon-mse', var: 'window', files: ['dist/flv.js', 'dist/hls.js'] }, { name: 'pako', var: 'window.pako', files: ['dist/pako.min.js'] }]
-    })
+    // EsmCdn({
+    //   sleep: 2000,
+    //   cdn: 'npmmirror',
+    //   modules: ['vue', 'vue-router', { name: 'lemon-mse', var: 'window', files: ['dist/flv.js', 'dist/hls.js'] }, { name: 'pako', var: 'window.pako', files: ['dist/pako.min.js'] }]
+    // })
   ],
   build: {
     outDir: 'D:/deno/lemonlive/dist',

@@ -1,6 +1,6 @@
 ## livestream
  
-[https://lemonlive.deno.dev](https://lemonlive.deno.dev)
+[http://localhost:4173/douyu](http://localhost:4173/douyu)
 
 虎牙直播、斗鱼直播、抖音直播、哔哩直播、CC直播
 

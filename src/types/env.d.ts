@@ -125,7 +125,8 @@ declare global {
     notice?: string;
     url?: string;
     ws?:string
-    stream: LiveStream;
+    //stream: LiveStream;
+    stream: StreamList[]; //新的数据结构
   };
   /** 主播信息 */
   type LiveAnchorItem = Expand<
