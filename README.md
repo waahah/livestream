@@ -1,5 +1,5 @@
 ## livestream
- 
+
 [http://localhost:4173/douyu](http://localhost:4173/douyu)
 
 虎牙直播、斗鱼直播、抖音直播、哔哩直播、CC直播
@@ -15,15 +15,16 @@ deno + vite + vue + ts
 
 ## 预览
 
-![](https://i0.hdslb.com/bfs/article/3c08b10b31ca9b70d65cb1eec7c9b3d898845873.png@1e_1c.webp)
+![](img/1280x800_1.png)
 
-![](https://i0.hdslb.com/bfs/article/78afa042d882f917e514fc516141eca898845873.png@1e_1c.webp)
+![](img/1280x800_2.png)
 
-![](https://i0.hdslb.com/bfs/article/4596f99ae7be713dc96d3dc33b3a3dcc98845873.png@1e_1c.webp)
+![](img/1680_3.png)
 
-![](https://i0.hdslb.com/bfs/article/ddaa70bc70675e6c7817b6dd29e338af98845873.png@1e_1c.webp)
- 
-## 捐赠
+![](img/search.png)
+
+## 许可证
+[GPL-3.0 license](LICENSE)
 
 <div>
   <img height="300" style="margin-right:20px" src="">
